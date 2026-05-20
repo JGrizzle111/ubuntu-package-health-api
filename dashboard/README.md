@@ -1,73 +1,83 @@
-# React + TypeScript + Vite
+# Ubuntu Package Health Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend app for the Ubuntu Package Health monorepo.
 
-Currently, two official plugins are available:
+This dashboard is built with React, TypeScript, and Vite, and it consumes the FastAPI backend endpoints to display:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- API health status
+- Package install and upgrade information
+- Package dependencies
+- System-wide upgradable packages
 
-## React Compiler
+## Location In Monorepo
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+This project lives in [dashboard](dashboard) under the repository root.
 
-## Expanding the ESLint configuration
+For full-stack instructions, see the root guide at [README.md](../README.md).
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Node.js 20+
+- npm
+- Backend API running on http://127.0.0.1:8000
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Local Development
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+From this folder:
+
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Default local URL:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- http://127.0.0.1:5173
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Available Scripts
+
+```bash
+npm run dev      # Start Vite dev server
+npm run build    # Type-check and build production bundle
+npm run preview  # Preview built app locally
+npm run lint     # Run ESLint
 ```
+
+## Backend Connection
+
+The frontend calls the backend using a fixed base URL in [src/api/packageHealthApi.ts](src/api/packageHealthApi.ts).
+
+Current value:
+
+- http://127.0.0.1:8000
+
+If your backend runs elsewhere, update the API base URL in [src/api/packageHealthApi.ts](src/api/packageHealthApi.ts).
+
+## Expected Backend Endpoints
+
+- GET /health
+- GET /packages/{package_name}
+- GET /packages/{package_name}/dependencies
+- GET /system/upgradable
+
+## Example Workflow
+
+1. Start backend from repo root with FastAPI.
+2. Start this dashboard with npm run dev.
+3. Open the dashboard in browser.
+4. Search for a package such as nginx.
+5. Review install state, candidate version, dependencies, and pending upgrades.
+
+## Troubleshooting
+
+- Blank data or request failures: verify backend is reachable at http://127.0.0.1:8000.
+- CORS errors: confirm backend allows origin http://127.0.0.1:5173 or http://localhost:5173.
+- Frontend dependency errors: remove node_modules and reinstall with npm install.
+- Build issues: run npm run lint and npm run build to surface TypeScript/ESLint details.
+
+## Tech Stack
+
+- React
+- TypeScript
+- Vite
+- ESLint

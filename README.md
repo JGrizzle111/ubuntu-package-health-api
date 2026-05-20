@@ -1,120 +1,114 @@
-# Ubuntu Package Health API
+# Ubuntu Package Health Monorepo
 
-A FastAPI-based API for inspecting Ubuntu package metadata, installed versions, candidate versions, dependencies, and upgrade availability.
+A full-stack monorepo for checking Ubuntu package health:
 
-This project is designed as a Linux/Python portfolio project, especially for roles involving Ubuntu, backend development, systems programming, DevOps, or open-source engineering.
+- Backend API: FastAPI service that wraps apt and apt-cache commands
+- Frontend dashboard: React + TypeScript app for package lookup and upgrade visibility
 
-## Overview
+This repository is useful for Linux tooling, backend systems work, Dand DevOps demos.
 
-The Ubuntu Package Health API wraps common Ubuntu package-management commands in a clean REST API.
-
-It can check:
-
-- Whether a package is installed
-- The installed version of a package
-- The candidate version available from APT
-- Whether a package is upgradable
-- A package's dependencies
-- System-wide upgradable packages
-
-The API is built with Python and FastAPI and is designed to run inside an Ubuntu-based container, even if the developer is using another Linux distribution such as Fedora.
-
-## Why This Project Exists
-
-Ubuntu package tools such as `apt`, `apt-cache`, and `dpkg` are useful from the command line, but they are not exposed as a structured API by default.
-
-This project provides a simple API layer over those tools so package information can be accessed programmatically.
-
-Example use cases:
-
-- Developer tooling
-- System health dashboards
-- Package audit reports
-- Ubuntu server monitoring
-- DevOps automation
-- Learning Linux package management
-
-## Tech Stack
-
-- Python
-- FastAPI
-- Pydantic
-- pytest
-- Docker or Podman
-- Ubuntu
-- APT package tools
-
-## Features
-
-- Health check endpoint
-- Package metadata endpoint
-- Package dependency endpoint
-- System upgradable packages endpoint
-- Input validation for package names
-- Unit tests with pytest
-- Mocked command-output tests
-- Docker/Podman container support
-- Automatic Swagger/OpenAPI documentation
-
-## Project Structure
+## Monorepo Layout
 
 ```txt
 ubuntu-package-health-api/
-├── app/
-│   ├── __init__.py
+├── app/                          # FastAPI backend
 │   ├── main.py
 │   ├── routes/
-│   │   ├── __init__.py
-│   │   ├── health.py
-│   │   ├── packages.py
-│   │   └── system.py
 │   ├── schemas/
-│   │   ├── __init__.py
-│   │   └── package_schema.py
 │   └── services/
-│       ├── __init__.py
-│       ├── apt_service.py
-│       └── validation.py
-├── tests/
-│   ├── test_apt_service.py
-│   └── test_validation.py
-├── Dockerfile
-├── pytest.ini
+├── tests/                        # Backend tests
+├── dashboard/                    # React + Vite frontend
+│   ├── src/
+│   ├── package.json
+│   └── vite.config.ts
+├── Dockerfile                    # Backend container image
 ├── requirements.txt
-├── README.md
-└── .gitignore
+└── README.md
 ```
 
-## API Endpoints
+## What It Does
 
-### Health Check
+The backend exposes Ubuntu package data through REST endpoints:
 
-```txt
-GET /health
+- Check package install status
+- Compare installed vs candidate versions
+- Detect whether a package is upgradable
+- List package dependencies
+- List all upgradable packages on the system
+
+The dashboard consumes those endpoints and provides a UI to:
+
+- Search package details
+- View package dependency results
+- View current system upgrade candidates
+
+## Prerequisites
+
+- Linux machine (Ubuntu recommended for native apt behavior)
+- Python 3.10+
+- Node.js 20+ and npm
+- Optional: Docker or Podman for running backend in Ubuntu container
+
+## Quick Start (Run Full Stack Locally)
+
+From the repository root:
+
+1. Start the backend
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+fastapi dev app/main.py
 ```
 
-Example response:
+Backend URLs:
 
-```json
-{
-  "status": "ok",
-  "service": "ubuntu-package-health-api"
-}
+- API: http://127.0.0.1:8000
+- OpenAPI docs: http://127.0.0.1:8000/docs
+
+2. Start the dashboard in a second terminal
+
+```bash
+cd dashboard
+npm install
+npm run dev
 ```
 
-### Get Package Info
+Dashboard URL:
 
-```txt
-GET /packages/{package_name}
+- UI: http://127.0.0.1:5173
+
+The frontend currently calls the backend at http://127.0.0.1:8000.
+
+## Backend Usage
+
+### Endpoints
+
+- GET /health
+- GET /packages/{package_name}
+- GET /packages/{package_name}/dependencies
+- GET /system/upgradable
+
+### Curl Examples
+
+```bash
+curl http://127.0.0.1:8000/health
 ```
 
-Example:
-
-```txt
-GET /packages/nginx
+```bash
+curl http://127.0.0.1:8000/packages/nginx
 ```
 
-Example response:
+```bash
+curl http://127.0.0.1:8000/packages/nginx/dependencies
+```
+
+```bash
+curl http://127.0.0.1:8000/system/upgradable
+```
+
+### Example Responses
 
 ```json
 {
@@ -125,38 +119,6 @@ Example response:
   "is_upgradable": true
 }
 ```
-
-### Get Package Dependencies
-
-```txt
-GET /packages/{package_name}/dependencies
-```
-
-Example:
-
-```txt
-GET /packages/nginx/dependencies
-```
-
-Example response:
-
-```json
-{
-  "name": "nginx",
-  "dependencies": [
-    "nginx-common",
-    "nginx-core"
-  ]
-}
-```
-
-### Get Upgradable Packages
-
-```txt
-GET /system/upgradable
-```
-
-Example response:
 
 ```json
 {
@@ -171,250 +133,114 @@ Example response:
 }
 ```
 
-## Running Locally
+## Frontend Usage
 
-Create and activate a virtual environment:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-Install dependencies:
+From the dashboard folder:
 
 ```bash
-pip install -r requirements.txt
+cd dashboard
+npm install
+npm run dev
 ```
 
-Run the development server:
+Other frontend scripts:
 
 ```bash
-fastapi dev app/main.py
-```
-
-Open the API docs:
-
-```txt
-http://127.0.0.1:8000/docs
-```
-
-## Important Note About Fedora, Arch, and Other Linux Distros
-
-This project is designed around Ubuntu package tools.
-
-If you run the app directly on Fedora, Arch, or another non-Ubuntu distribution, commands like these may not work:
-
-```bash
-apt-cache policy nginx
-apt-cache depends nginx
-apt list --upgradable
-```
-
-For accurate Ubuntu package behavior, run the app inside the provided Ubuntu container.
-
-## Running with Podman
-
-Build the image:
-
-```bash
-podman build --no-cache -t ubuntu-package-health-api .
-```
-
-Run the container:
-
-```bash
-podman run --rm -p 8000:8000 ubuntu-package-health-api
-```
-
-Open:
-
-```txt
-http://127.0.0.1:8000/docs
-```
-
-## Running with Docker
-
-Build the image:
-
-```bash
-docker build --no-cache -t ubuntu-package-health-api .
-```
-
-Run the container:
-
-```bash
-docker run --rm -p 8000:8000 ubuntu-package-health-api
-```
-
-Open:
-
-```txt
-http://127.0.0.1:8000/docs
-```
-
-## Example Dockerfile
-
-```dockerfile
-FROM ubuntu:24.04
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    python3-venv \
-    apt-utils \
-    nginx \
-    curl \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-COPY requirements.txt .
-
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
-
-EXPOSE 8000
-
-CMD ["fastapi", "run", "app/main.py", "--host", "0.0.0.0", "--port", "8000"]
+npm run build
+npm run preview
+npm run lint
 ```
 
 ## Running Tests
 
-Run:
+From the repo root:
 
 ```bash
+source .venv/bin/activate
 python -m pytest
 ```
 
-Expected output:
+## Containerized Backend (Recommended on Non-Ubuntu Hosts)
 
-```txt
-3 passed
+If your host OS is Fedora, Arch, or another distro where apt tools differ, use the container.
+
+### Docker
+
+```bash
+docker build -t ubuntu-package-health-api .
+docker run --rm -p 8000:8000 ubuntu-package-health-api
 ```
 
-## Testing Strategy
+### Podman
 
-The project uses pytest to test important logic without relying on the actual system state.
-
-For example, package policy parsing is tested by mocking command output instead of requiring a real installed package.
-
-Example test idea:
-
-```python
-def test_get_package_policy_parses_versions(monkeypatch):
-    fake_output = """
-nginx:
-  Installed: 1.24.0-2ubuntu7
-  Candidate: 1.24.0-2ubuntu7.1
-  Version table:
-     1.24.0-2ubuntu7.1 500
-"""
-
-    def fake_run_command(command):
-        return fake_output
-
-    monkeypatch.setattr(
-        "app.services.apt_service.run_command",
-        fake_run_command
-    )
-
-    result = get_package_policy("nginx")
-
-    assert result["name"] == "nginx"
-    assert result["installed_version"] == "1.24.0-2ubuntu7"
-    assert result["candidate_version"] == "1.24.0-2ubuntu7.1"
-    assert result["is_installed"] is True
-    assert result["is_upgradable"] is True
+```bash
+podman build -t ubuntu-package-health-api .
+podman run --rm -p 8000:8000 ubuntu-package-health-api
 ```
+
+Then run the dashboard normally from dashboard/ and point it at http://127.0.0.1:8000.
+
+## Example Use Cases
+
+### 1. Pre-upgrade server check
+
+Goal: quickly inspect pending package updates before a maintenance window.
+
+Steps:
+
+1. Start API and dashboard.
+2. Open the dashboard and load upgradable packages.
+3. Review current_version vs new_version to estimate update impact.
+4. Export or copy results into your maintenance checklist.
+
+### 2. Dependency triage for a broken package
+
+Goal: inspect dependencies when a package install or runtime fails.
+
+Steps:
+
+1. Query GET /packages/{name} to verify install and candidate versions.
+2. Query GET /packages/{name}/dependencies to inspect required packages.
+3. Validate missing or outdated dependencies on target hosts.
+
+### 3. Developer environment consistency check
+
+Goal: compare package versions across dev machines.
+
+Steps:
+
+1. Run the API on each machine.
+2. Query common packages (for example: git, curl, openssl, python3).
+3. Compare responses to detect drift.
+
+### 4. Dashboard-backed operations view
+
+Goal: provide teammates a simple UI over apt status without shell access.
+
+Steps:
+
+1. Deploy API on a controlled Ubuntu host.
+2. Serve dashboard internally.
+3. Let users inspect package state via browser rather than CLI.
+
+## Configuration Notes
+
+- CORS currently allows http://localhost:5173 and http://127.0.0.1:5173.
+- Frontend API base URL is set in dashboard/src/api/packageHealthApi.ts.
+- If backend host/port changes, update that file to match your environment.
 
 ## Security Notes
 
-This project runs system commands from Python, so it avoids unsafe shell execution.
+- Backend command execution uses subprocess with argument lists, not shell=True.
+- Package input is validated before being passed to apt tools.
+- Keep this service internal unless you add auth, rate limiting, and network controls.
 
-Instead of using:
+## Troubleshooting
 
-```python
-subprocess.run("apt-cache policy nginx", shell=True)
-```
-
-It uses list-based commands:
-
-```python
-subprocess.run(["apt-cache", "policy", package_name])
-```
-
-The API also validates package names before passing them to system commands.
-
-## Example Package Name Validation
-
-Valid package names:
-
-```txt
-nginx
-python3
-libssl3
-g++
-curl
-```
-
-Invalid package names:
-
-```txt
-nginx && whoami
-../secret
-;rm -rf /
-```
-
-## Future Improvements
-
-Planned improvements:
-
-- Add reverse dependency lookup
-- Add changelog lookup
-- Add package search endpoint
-- Add security update detection
-- Add JSON system scan reports
-- Add a CLI client
-- Add GitHub Actions CI
-- Add rate limiting
-- Add structured logging
-- Add support for Debian-based distributions beyond Ubuntu
-
-## Possible Future Endpoints
-
-```txt
-GET /packages/{package_name}/reverse-dependencies
-GET /packages/{package_name}/changelog
-GET /packages/search?q=nginx
-GET /system/report
-GET /system/security-updates
-```
-
-## Resume Bullet
-
-Built a Python/FastAPI Ubuntu Package Health API that inspects APT package metadata, installed versions, candidate versions, dependencies, and upgrade availability. Added package-name validation, pytest unit tests, mocked command-output testing, Dockerized Ubuntu runtime, and automatic OpenAPI documentation.
-
-## What I Learned
-
-This project demonstrates:
-
-- Building REST APIs with FastAPI
-- Running Linux system commands from Python
-- Safely using `subprocess`
-- Parsing command-line output
-- Working with Ubuntu package tools
-- Writing unit tests with pytest
-- Mocking system command output
-- Running Ubuntu tooling inside containers
-- Debugging host OS versus container OS differences
-- Creating portfolio-ready backend documentation
+- apt-cache or apt list command errors on non-Ubuntu host: run backend in Docker/Podman.
+- Dashboard cannot reach API: confirm backend is running on port 8000 and CORS origin matches 5173.
+- Import or dependency errors in frontend: run npm install inside dashboard/.
+- Python module errors: activate .venv and reinstall requirements.txt.
 
 ## License
 
