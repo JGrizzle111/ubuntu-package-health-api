@@ -6,7 +6,7 @@ class PackageInfo(BaseModel):
     installed_version: Optional[str]
     candidate_version: Optional[str]
     is_installed: bool
-    is_upgradeable: bool
+    is_upgradable: bool
 
 class PackageDependencies(BaseModel):
     name: str

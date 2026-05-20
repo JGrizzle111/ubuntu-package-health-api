@@ -7,7 +7,14 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-venv \
     apt-utils \
-    && rm -rf /var/lib/apt/lists/*
+    bash \
+    coreutils \
+    curl \
+    git \
+    nginx \
+    openssh-server \
+    python3-pip \
+    vim 
 
 WORKDIR /app
 

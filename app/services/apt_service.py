@@ -70,35 +70,49 @@ def get_package_dependencies(package_name: str) -> List[str]:
     return dependencies
 
 def get_upgradable_packages() -> List[dict]:
-    output = run_command(["apt", "list", "--upgradeable"])
+    output = run_command(["apt", "list", "--upgradable"])
 
     packages = []
 
     for line in output.splitlines():
-        if line.startswith("Listing..."):
+        line = line.strip()
+
+        if not line:
+            continue
+
+        if line.startswith("Listing"):
             continue
 
         if "/" not in line:
             continue
-        
-        name_part = line.split("/", 1)[0]
-
-        new_version = None
-        current_version = None
 
         parts = line.split()
-        if len(parts) >= 2:
-            new_version = parts[1]
 
-        if "upgradable from:" in line:
-            current_version = line.split("Upgradable from:", 1)[1]
-            current_version = current_version.replace("]", "").strip()
+        if len(parts) < 3:
+            continue
+
+        name = parts[0].split("/", 1)[0]
+        new_version = parts[1]
+        architecture = parts[2]
+
+        current_version = None
+
+        if "upgradable from:" in line.lower():
+            marker = "upgradable from:"
+            lower_line = line.lower()
+            marker_index = lower_line.find(marker)
+
+            if marker_index != -1:
+                current_version = line[marker_index + len(marker):]
+                current_version = current_version.replace("]", "").strip()
 
         packages.append(
             {
-                "name": name_part,
+                "name": name,
                 "current_version": current_version,
                 "new_version": new_version,
+                "architecture": architecture,
             }
         )
+
     return packages
